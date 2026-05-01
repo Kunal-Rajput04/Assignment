@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,6 +23,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -56,9 +58,11 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         .csrf(csrf -> csrf.disable())
         .httpBasic(httpBasic -> httpBasic.disable())
         .authorizeHttpRequests(authorize -> authorize
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ✅ important
-            .requestMatchers("/api/auth/**").permitAll()
-            .anyRequest().authenticated()
+    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔥 MUST BE FIRST
+    .requestMatchers("/api/auth/**").permitAll()
+    .requestMatchers("/api/public/**").permitAll()
+    .anyRequest().authenticated()
+
         )
         .exceptionHandling(handler -> handler
             .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
