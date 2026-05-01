@@ -42,6 +42,11 @@ public class SecurityConfig {
                 .build())
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
+    @Bean
+public org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer webSecurityCustomizer() {
+    return (web) -> web.ignoring()
+        .requestMatchers(HttpMethod.OPTIONS, "/**"); // 🔥 ignore ALL preflight
+}
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http,
@@ -90,18 +95,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // You’re using credentials: include cookies
-        config.setAllowCredentials(true);
-
-        
-        // (later replace with your frontend URL only)
         config.setAllowedOriginPatterns(List.of("*"));
-
-        // Allow all methods incl. OPTIONS
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Allow all headers
+        config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
