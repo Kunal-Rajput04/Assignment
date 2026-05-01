@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -42,11 +43,12 @@ public class SecurityConfig {
                 .build())
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
+
     @Bean
-public org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer webSecurityCustomizer() {
-    return (web) -> web.ignoring()
-        .requestMatchers(HttpMethod.OPTIONS, "/**"); 
-}
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.ignoring()
+            .requestMatchers(HttpMethod.OPTIONS, "/**"); // ignore ALL preflight
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http,
@@ -60,56 +62,39 @@ public org.springframework.security.config.annotation.web.configuration.WebSecur
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-            
             .csrf(csrf -> csrf.disable())
-
             .httpBasic(httpBasic -> httpBasic.disable())
-
-            // (Optional but safe) keep sessions
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
-
             .authorizeHttpRequests(auth -> auth
-
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // Public auth endpoints
                 .requestMatchers("/api/auth/**").permitAll()
-
                 .anyRequest().authenticated()
             )
-
-            
             .exceptionHandling(handler -> handler
-                .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.OK))
+                .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
             );
 
         return http.build();
     }
 
     @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration config = new CorsConfiguration();
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://*.up.railway.app"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
 
-    config.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
 
-    
-    config.setAllowedOriginPatterns(List.of(
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://*.up.railway.app" // 🔥 covers all Railway frontend URLs
-    ));
-
-    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    config.setAllowedHeaders(List.of("*"));
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", config);
-
-    return source;
-}
+        return source;
+    }
 }
