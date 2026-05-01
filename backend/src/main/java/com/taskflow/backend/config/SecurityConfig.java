@@ -57,15 +57,10 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .csrf(csrf -> csrf.disable())
         .httpBasic(httpBasic -> httpBasic.disable())
-        .authorizeHttpRequests(authorize -> authorize
-    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔥 MUST BE FIRST
-    .requestMatchers("/api/auth/**").permitAll()
-    .requestMatchers("/api/public/**").permitAll()
-    .anyRequest().authenticated()
-
-        )
-        .exceptionHandling(handler -> handler
-            .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔥 THIS FIXES PREFLIGHT
+            .requestMatchers("/api/auth/**").permitAll()
+            .anyRequest().authenticated()
         );
 
     return http.build();
@@ -92,7 +87,9 @@ public CorsConfigurationSource corsConfigurationSource() {
 
     config.setAllowCredentials(true);
 
-    config.setAllowedOriginPatterns(List.of("*")); // 🔥 TEMP FIX (IMPORTANT)
+    config.setAllowedOriginPatterns(List.of(
+        "https://fearless-prosperity-production-9c18.up.railway.app"
+    ));
 
     config.setAllowedMethods(List.of("*"));
     config.setAllowedHeaders(List.of("*"));
