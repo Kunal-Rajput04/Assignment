@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -54,16 +55,32 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            
             .csrf(csrf -> csrf.disable())
+
             .httpBasic(httpBasic -> httpBasic.disable())
+
+            // (Optional but safe) keep sessions
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            )
+
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
+                // 🔥 Allow ALL preflight requests
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                // Public auth endpoints
                 .requestMatchers("/api/auth/**").permitAll()
+
                 .anyRequest().authenticated()
             )
+
+            
             .exceptionHandling(handler -> handler
-                .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
+                .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.OK))
             );
 
         return http.build();
@@ -73,12 +90,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
+        // You’re using credentials: include cookies
         config.setAllowCredentials(true);
 
-       
+        
+        // (later replace with your frontend URL only)
         config.setAllowedOriginPatterns(List.of("*"));
 
+        // Allow all methods incl. OPTIONS
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        // Allow all headers
         config.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
