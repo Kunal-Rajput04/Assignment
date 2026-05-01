@@ -52,51 +52,38 @@ public class SecurityConfig {
     }
 
     @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
-        .httpBasic(httpBasic -> httpBasic.disable())
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔥 THIS FIXES PREFLIGHT
-            .requestMatchers("/api/auth/**").permitAll()
-            .anyRequest().authenticated()
-        );
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .httpBasic(httpBasic -> httpBasic.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(handler -> handler
+                .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
+            );
 
-    return http.build();
-}
-
-@Bean
-public org.springframework.web.filter.CorsFilter corsFilter() {
-    CorsConfiguration config = new CorsConfiguration();
-
-    config.setAllowCredentials(true);
-    config.setAllowedOriginPatterns(List.of("*"));
-    config.setAllowedMethods(List.of("*"));
-    config.setAllowedHeaders(List.of("*"));
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", config);
-
-    return new org.springframework.web.filter.CorsFilter(source);
-}
+        return http.build();
+    }
 
     @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration config = new CorsConfiguration();
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
 
-    config.setAllowCredentials(true);
+        config.setAllowCredentials(true);
 
-    config.setAllowedOriginPatterns(List.of(
-        "https://fearless-prosperity-production-9c18.up.railway.app"
-    ));
+       
+        config.setAllowedOriginPatterns(List.of("*"));
 
-    config.setAllowedMethods(List.of("*"));
-    config.setAllowedHeaders(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", config);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
 
-    return source;
-}
+        return source;
+    }
 }
