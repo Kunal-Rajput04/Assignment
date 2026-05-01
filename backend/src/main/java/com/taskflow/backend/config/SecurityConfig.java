@@ -50,31 +50,37 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 🔥 IMPORTANT
-            .csrf(csrf -> csrf.disable())
-            .httpBasic(httpBasic -> httpBasic.disable())
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/public/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(handler -> handler
-                .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
-            )
-            .sessionManagement(session -> session
-                .sessionFixation().migrateSession()
-            )
-            .logout(logout -> logout
-                .logoutUrl("/api/auth/logout")
-                .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204))
-                .permitAll()
-            );
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
+        .httpBasic(httpBasic -> httpBasic.disable())
+        .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // ✅ important
+            .requestMatchers("/api/auth/**").permitAll()
+            .anyRequest().authenticated()
+        )
+        .exceptionHandling(handler -> handler
+            .authenticationEntryPoint(new HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED))
+        );
 
-        return http.build();
-    }
+    return http.build();
+}
+
+@Bean
+public org.springframework.web.filter.CorsFilter corsFilter() {
+    CorsConfiguration config = new CorsConfiguration();
+
+    config.setAllowCredentials(true);
+    config.setAllowedOriginPatterns(List.of("*"));
+    config.setAllowedMethods(List.of("*"));
+    config.setAllowedHeaders(List.of("*"));
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+
+    return new org.springframework.web.filter.CorsFilter(source);
+}
 
     @Bean
 public CorsConfigurationSource corsConfigurationSource() {
