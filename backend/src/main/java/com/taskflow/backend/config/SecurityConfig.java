@@ -45,7 +45,7 @@ public class SecurityConfig {
     @Bean
 public org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer webSecurityCustomizer() {
     return (web) -> web.ignoring()
-        .requestMatchers(HttpMethod.OPTIONS, "/**"); // 🔥 ignore ALL preflight
+        .requestMatchers(HttpMethod.OPTIONS, "/**"); 
 }
 
     @Bean
@@ -74,7 +74,7 @@ public org.springframework.security.config.annotation.web.configuration.WebSecur
             )
 
             .authorizeHttpRequests(auth -> auth
-                // 🔥 Allow ALL preflight requests
+
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                 // Public auth endpoints
@@ -92,17 +92,24 @@ public org.springframework.security.config.annotation.web.configuration.WebSecur
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedMethods(List.of("*"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+    config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+    
+    config.setAllowedOriginPatterns(List.of(
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://*.up.railway.app" // 🔥 covers all Railway frontend URLs
+    ));
 
-        return source;
-    }
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(List.of("*"));
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+
+    return source;
+}
 }
