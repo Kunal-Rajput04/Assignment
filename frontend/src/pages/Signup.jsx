@@ -8,6 +8,7 @@ export default function Signup() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -17,17 +18,43 @@ export default function Signup() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    console.log("🚀 SUBMIT CLICKED");
+    console.log("📦 FORM DATA:", form);
+
     setError('');
+
     if (form.password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
+
     setLoading(true);
+
     try {
-      await signUp(form.email, form.password, form.name, form.role);
+      console.log("📡 CALLING SIGNUP API...");
+
+      const res = await signUp(
+        form.email,
+        form.password,
+        form.name,
+        form.role
+      );
+
+      console.log("✅ SIGNUP SUCCESS:", res);
+
       navigate('/dashboard');
+
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      console.error("❌ SIGNUP ERROR:", err);
+
+      // Show real backend error if available
+      if (err?.message) {
+        setError(err.message);
+      } else {
+        setError('Registration failed');
+      }
+
     } finally {
       setLoading(false);
     }
@@ -36,6 +63,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-500 rounded-2xl mb-4 shadow-lg shadow-blue-500/30">
             <CheckSquare className="w-8 h-8 text-white" />
@@ -54,79 +82,70 @@ export default function Signup() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={e => update('name', e.target.value)}
+              placeholder="Full Name"
+              className="w-full px-4 py-2.5 border rounded-lg"
+            />
+
+            <input
+              type="email"
+              required
+              value={form.email}
+              onChange={e => update('email', e.target.value)}
+              placeholder="Email"
+              className="w-full px-4 py-2.5 border rounded-lg"
+            />
+
+            <div className="relative">
               <input
-                type="text"
+                type={showPw ? 'text' : 'password'}
                 required
-                value={form.name}
-                onChange={e => update('name', e.target.value)}
-                placeholder="John Doe"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                value={form.password}
+                onChange={e => update('password', e.target.value)}
+                placeholder="Password"
+                className="w-full px-4 py-2.5 border rounded-lg"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-              <input
-                type="email"
-                required
-                value={form.email}
-                onChange={e => update('email', e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
-              <div className="relative">
-                <input
-                  type={showPw ? 'text' : 'password'}
-                  required
-                  value={form.password}
-                  onChange={e => update('password', e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  onClick={() => setShowPw(v => !v)}
-                >
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
-              <select
-                value={form.role}
-                onChange={e => update('role', e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
+              <button
+                type="button"
+                onClick={() => setShowPw(v => !v)}
+                className="absolute right-3 top-2.5"
               >
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
-              </select>
+                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
+
+            <select
+              value={form.role}
+              onChange={e => update('role', e.target.value)}
+              className="w-full px-4 py-2.5 border rounded-lg"
+            >
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-blue-600 text-white rounded-lg flex items-center justify-center gap-2"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading && <Loader2 className="animate-spin w-4 h-4" />}
               Create Account
             </button>
+
           </form>
 
-          <p className="mt-5 text-center text-sm text-gray-500">
+          <p className="mt-5 text-center text-sm">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 font-medium hover:underline">
+            <Link to="/login" className="text-blue-600">
               Sign in
             </Link>
           </p>
+
         </div>
       </div>
     </div>
