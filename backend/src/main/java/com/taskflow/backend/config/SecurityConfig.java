@@ -77,23 +77,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowCredentials(true);
+    config.setAllowCredentials(true);
 
-        config.setAllowedOrigins(List.of(
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "https://fearless-prosperity-production-9c18.up.railway.app" // 🔥 ADD THIS
-        ));
+    config.setAllowedOriginPatterns(List.of("*")); // 🔥 TEMP FIX (IMPORTANT)
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+    config.setAllowedMethods(List.of("*"));
+    config.setAllowedHeaders(List.of("*"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
 
-        return source;
-    }
+    return source;
+}
 }
